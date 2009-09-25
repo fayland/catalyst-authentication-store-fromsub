@@ -11,33 +11,32 @@ use strict;
 
     use Catalyst qw/Authentication/;
 
-    __PACKAGE__->config->{authentication} = 
-                    {  
-                        default_realm => 'members',
-                        realms => {
-                            members => {
-                                credential => {
-                                    class => 'Password',
-                                    password_field => 'password',
-                                    password_type => 'clear'
-                                },
-                                store => {
-                                    class => 'FromSub::Hash',
-                                    model_class => 'UserAuth',
-                                    id_field => 'user_id',
-                                }
-                            }
-                        }
-                    };
+    __PACKAGE__->config->{authentication} = {  
+        default_realm => 'members',
+        realms => {
+            members => {
+            credential => {
+                class => 'Password',
+                password_field => 'password',
+                password_type => 'clear'
+            },
+            store => {
+                class => 'FromSub', # or 'Object'
+                user_type => 'Hash',
+                model_class => 'UserAuth',
+                id_field => 'user_id',
+            }
+        }
+    } };
 
     # Log a user in:
     sub login : Global {
         my ( $self, $c ) = @_;
         
-        $c->authenticate({  
-                          username => $c->req->params->username,
-                          password => $c->req->params->password,
-                          }))
+        $c->authenticate( {  
+            username => $c->req->params->username,
+            password => $c->req->params->password,
+        } );
     }
     
     package MyApp::Model::UserAuth; # map with model_class in config above
@@ -53,8 +52,7 @@ use strict;
         } elsif (exists $userinfo->{username}) { # from authenticate
             $where = { username => $userinfo->{username} };
         } else { return; }
-    
-        
+
         # deal with cache
         # if (my $val = $c->cache->get($key) {
         #     return $val;
@@ -70,50 +68,46 @@ use strict;
     
 =head1 DESCRIPTION
 
-Catalyst::Authentication::Store::FromSub::Hash class provides 
-access to authentication information by using a Catalyst Model sub auth.
+Catalyst::Authentication::Store::FromSub class provides 
+access to authentication information by using a Catalyst Model sub B<auth>.
 
-In sub auth of the Catalyst model, we can use cache there. it would avoid the hit of db every request.
+In sub auth of the Catalyst model, we can use cache there (or do some complicated code). it would avoid the hit of db every request.
 
 =head2 CONFIGURATION
 
-The FromSub::Hash authentication store is activated by setting the store
-config B<class> element to 'FromSub::Hash'.  See the 
+The FromSub authentication store is activated by setting the store
+config B<class> element to 'FromSub'.  See the 
 L<Catalyst::Plugin::Authentication> documentation for more details on 
 configuring the store.
 
-The FromSub::Hash storage module has several configuration options
+The FromSub storage module has several configuration options
 
-
-    __PACKAGE__->config->{authentication} = 
-                    {  
-                        default_realm => 'members',
-                        realms => {
-                            members => {
-                                credential => {
-                                    # ...
-                                },
-                                store => {
-                                    class => 'FromSub::Hash',
-                                    model_class => 'UserAuth',
-                                    id_field => 'user_id',
-                                }
-                            }
-                        }
-                    };
+    __PACKAGE__->config->{authentication} = {  
+        default_realm => 'members',
+        realms => {
+            members => {
+                credential => {
+                    # ...
+                },
+                store => {
+                    class => 'FromSub',
+                    user_type => 'Object',
+                    model_class => 'UserAuth',
+                    id_field => 'user_id',
+                }
+            }
+        }
+    };
 
     authentication:
       default_realm: 'members'
-      password_hash_type: "clear"
       realms:
         members:
           credential:
             class: 'Password'
-            password_field: 'password'
-            password_type: "hashed"
-            password_hash_type: "SHA-1"
           store:
-            class: 'FromSub::Hash'
+            class: 'FromSub'
+            user_type: 'Object'
             model_class: "UserAuth"
 
 =over 4
@@ -121,9 +115,13 @@ The FromSub::Hash storage module has several configuration options
 =item class
 
 Class is part of the core Catalyst::Authentication::Plugin module, it
-contains the class name of the store to be used.
+contains the class name of the store to be used. it must be 'FromSub' here.
 
-=item user_class
+=item user_type
+
+'Hash' or 'Object', depends on the return value in sub auth, B<REQUIRED>.
+
+=item model_class
 
 Contains the class name (as passed to $c->model()) of Catalyst.  This config item is B<REQUIRED>.
 
@@ -141,13 +139,13 @@ For restore from session, we pass { $id_field => $c->session->{__user}->{$id_fie
             $where = { username => $userinfo->{username} };
         } else { return; }
 
-It is a primary key in the hash return by sub auth. Default is 'id'
+It is a primary key return by sub auth. Default as 'id'
 
 =back
 
 =head2 USAGE 
 
-The L<Catalyst::Authentication::Store::FromSub::Hash> storage module
+The L<Catalyst::Authentication::Store::FromSub> storage module
 is not called directly from application code.  You interface with it 
 through the $c->authenticate() call.
 
@@ -159,11 +157,11 @@ through the $c->authenticate() call.
     sub login : Global {
         my ( $self, $c ) = @_;
         
-        $c->authenticate({  
-                          username => $c->req->params->username,
-                          password => $c->req->params->password,
-                          status => [ 'active', 'registered' ],
-                          }))
+        $c->authenticate( {  
+            username => $c->req->params->username,
+            password => $c->req->params->password,
+            status => [ 'active', 'registered' ],
+        } );
     }
 
     sub is_admin : Global {
