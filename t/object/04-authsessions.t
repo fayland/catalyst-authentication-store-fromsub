@@ -53,7 +53,8 @@ BEGIN {
                     store => {
                         'class' => 'FromSub',
                         'model_class' => 'UserAuth',
-                        'user_type' => 'Hash',
+                        'user_type' => 'Object',
+                        id_field => 'id',
                     },
                 },
             },

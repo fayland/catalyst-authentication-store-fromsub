@@ -8,30 +8,33 @@ sub auth {
     
     my $where;
     if (exists $user_info->{id}) {
-        $where = { user_id => $user_info->{id} };
+        $where = { id => $user_info->{id} };
     } elsif (exists $user_info->{username}) {
         $where = { username => $user_info->{username} };
     } else { return; }
 
     my $user = $c->model('TestApp')->resultset('User')->search( $where )->first;
-    $user = $user->{_column_data}; # hash
 
     if ( exists $user_info->{status} and ref $user_info->{status} eq 'ARRAY') {
-        unless (grep { $_ eq $user->{status} } @{$user_info->{status}}) {
+        unless (grep { $_ eq $user->status } @{$user_info->{status}}) {
             return;
         }
     }
+
+=pod
     
     # get user roles
     my $role_rs = $c->model('TestApp')->resultset('UserRole')->search( {
-        user => $user->{id}
+        user => $user->id
     } );
     while (my $r = $role_rs->next) {
         my $role = $c->model('TestApp')->resultset('Role')->find( {
             id => $r->roleid
         } );
-        push @{$user->{roles}}, $role->role;
+#        push @{$user->{roles}}, $role->role;
     }
+
+=cut
     
     return $user;
 }

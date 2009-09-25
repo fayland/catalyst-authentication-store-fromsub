@@ -141,7 +141,7 @@ For restore from session, we pass { $id_field => $c->session->{__user}->{$id_fie
             $where = { username => $userinfo->{username} };
         } else { return; }
 
-It is a primary key in the hash return by sub auth. Default is 'user_id'
+It is a primary key in the hash return by sub auth. Default is 'id'
 
 =back
 
@@ -252,7 +252,7 @@ sub new {
         Catalyst::Utils::ensure_class_loaded( 'Catalyst::Authentication::User::Hash' );
         $config->{user_type} = 'Catalyst::Authentication::User::Hash';
     } elsif ( $user_type eq 'Object' ) {
-        Catalyst::Utils::ensure_class_loaded( 'Catalyst::Authentication::User::Object' );
+        Catalyst::Utils::ensure_class_loaded( 'Catalyst::Authentication::FromSub::User::Object' );
         $config->{user_type} = 'Catalyst::Authentication::FromSub::User::Object';
     } else {
         Catalyst::Utils::ensure_class_loaded( $user_type );
@@ -267,7 +267,7 @@ sub from_session {
     # Don't use data in session because data maybe changed in model_class sub auth.
     # return $id if ref $id;
     
-    my $id_field = $self->{config}->{id_field} || 'user_id';
+    my $id_field = $self->{config}->{id_field} || 'id';
     if (ref $id) {
         if ( exists $id->{$id_field} ) {
             return $self->find_user( { $id_field => $id->{$id_field}  }, $c );

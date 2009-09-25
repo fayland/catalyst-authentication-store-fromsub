@@ -31,7 +31,7 @@ sub for_session {
     my $self = shift;
 
     my $config = $self->_storage->{config};
-    my $id_field = $config->{id_field} || 'user_id';
+    my $id_field = $config->{id_field} || 'id';
     return { $id_field => $self->_user->$id_field };
 }
 

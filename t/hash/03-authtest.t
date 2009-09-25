@@ -6,6 +6,7 @@ use File::Path;
 use Test::More;
 use FindBin;
 use lib "$FindBin::Bin/lib";
+use lib "$FindBin::Bin/../lib";
 
 BEGIN {
 

@@ -3,8 +3,8 @@
 use strict;
 use warnings;
 use File::Path;
-use FindBin;
 use Test::More;
+use FindBin;
 use lib "$FindBin::Bin/lib";
 use lib "$FindBin::Bin/../lib";
 
@@ -22,20 +22,11 @@ BEGIN {
         or plan skip_all =>
         "Catalyst::Plugin::Session::State::Cookie is required for this test";
 
-    eval { require Test::WWW::Mechanize::Catalyst }
-      or plan skip_all =>
-      "Test::WWW::Mechanize::Catalyst is required for this test";
-
     eval { require DBD::SQLite }
         or plan skip_all =>
         "DBD::SQLite is required for this test";
 
-    eval { require Catalyst::Plugin::Session; 
-           die unless $Catalyst::Plugin::Session::VERSION >= 0.02 }
-        or plan skip_all =>
-        "Catalyst::Plugin::Session >= 0.02 is required for this test";
-
-    plan tests => 8;
+    plan tests => 10;
 
     $ENV{TESTAPP_DB_FILE} = "$FindBin::Bin/auth.db" unless exists($ENV{TESTAPP_DB_FILE});
 
@@ -53,7 +44,8 @@ BEGIN {
                     store => {
                         'class' => 'FromSub',
                         'model_class' => 'UserAuth',
-                        'user_type' => 'Hash',
+                        'user_type' => 'Object',
+                        id_field => 'id',
                     },
                 },
             },
@@ -61,41 +53,41 @@ BEGIN {
     };
 
     $ENV{TESTAPP_PLUGINS} = [
-        qw/Authentication
-           Session
-           Session::Store::Dummy
-           Session::State::Cookie
-           /
+        qw/Authentication/
     ];
 }
 
 use SetupDB;
-
-use Test::WWW::Mechanize::Catalyst 'TestApp';
-my $m = Test::WWW::Mechanize::Catalyst->new;
+use Catalyst::Test 'TestApp';
 
 # log a user in
 {
-    $m->get_ok( 'http://localhost/user_login?username=joeuser&password=hackme', undef, 'request ok' );
-    $m->content_is( 'joeuser logged in', 'user logged in ok' );
+    ok( my $res = request('http://localhost/user_login?username=joeuser&password=hackme'), 'request ok' );
+    is( $res->content, 'joeuser logged in', 'user logged in ok' );
 }
 
-# verify the user is still logged in
+# invalid user
 {
-    $m->get_ok( 'http://localhost/get_session_user', undef, 'request ok' );
-    $m->content_is( 'joeuser', 'user still logged in' );
+    ok( my $res = request('http://localhost/user_login?username=foo&password=bar'), 'request ok' );
+    is( $res->content, 'not logged in', 'user not logged in ok' );
+}
+
+# disabled user - no disable check
+{
+    ok( my $res = request('http://localhost/user_login?username=spammer&password=broken'), 'request ok' );
+    is( $res->content, 'spammer logged in', 'status check - disabled user logged in ok' );
+}
+
+# disabled user - should fail login
+{
+    ok( my $res = request('http://localhost/notdisabled_login?username=spammer&password=broken'), 'request ok' );
+    is( $res->content, 'not logged in', 'status check - disabled user not logged in ok' );
 }
 
 # log the user out
 {
-    $m->get_ok( 'http://localhost/user_logout', undef, 'request ok' );
-    $m->content_is( 'logged out', 'user logged out ok' );
-}
-
-# verify there is no session
-{
-    $m->get_ok( 'http://localhost/get_session_user', undef, 'request ok' );
-    $m->content_is( '', "user's session deleted" );
+    ok( my $res = request('http://localhost/user_logout'), 'request ok' );
+    is( $res->content, 'logged out', 'user logged out ok' );
 }
 
 # clean up
