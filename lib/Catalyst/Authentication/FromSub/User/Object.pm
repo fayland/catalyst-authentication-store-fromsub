@@ -2,8 +2,7 @@ package Catalyst::Authentication::FromSub::User::Object;
 
 use strict;
 use warnings;
-use base qw/Catalyst::Authentication::User/;
-use base qw/Class::Accessor::Fast/;
+use base qw/Catalyst::Authentication::User Class::Accessor::Fast/;
 
 BEGIN {
     __PACKAGE__->mk_accessors(qw/config _user _roles _storage/);
