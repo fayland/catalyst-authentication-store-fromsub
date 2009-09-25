@@ -8,7 +8,7 @@ sub auth {
     
     my $where;
     if (exists $user_info->{id}) {
-        $where = { user_id => $user_info->{id} };
+        $where = { id => $user_info->{id} };
     } elsif (exists $user_info->{username}) {
         $where = { username => $user_info->{username} };
     } else { return; }

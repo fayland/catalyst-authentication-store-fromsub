@@ -294,7 +294,7 @@ sub find_user {
     return unless $user;
 
     if ( $config->{user_type} eq 'Catalyst::Authentication::User::Hash' ) {
-        return bless $user, $config->{user_type};
+        return $config->{user_type}->new( $user );
     } else {
         return $config->{user_type}->new( { user => $user, storage => $self }, $c );
     }

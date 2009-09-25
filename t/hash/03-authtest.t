@@ -45,6 +45,7 @@ BEGIN {
                         'class' => 'FromSub',
                         'model_class' => 'UserAuth',
                         'user_type' => 'Hash',
+                        id_field => 'id',
                     },
                 },
             },
