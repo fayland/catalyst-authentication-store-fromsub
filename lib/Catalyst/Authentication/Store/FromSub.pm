@@ -253,7 +253,7 @@ sub new {
         $config->{user_type} = 'Catalyst::Authentication::User::Hash';
     } elsif ( $user_type eq 'Object' ) {
         Catalyst::Utils::ensure_class_loaded( 'Catalyst::Authentication::User::Object' );
-        $config->{user_type} = 'Catalyst::Authentication::User::Object';
+        $config->{user_type} = 'Catalyst::Authentication::FromSub::User::Object';
     } else {
         Catalyst::Utils::ensure_class_loaded( $user_type );
     }
@@ -279,22 +279,33 @@ sub from_session {
     $self->find_user( { $id_field => $id }, $c );
 }
 
+sub for_session {
+    my ($self, $c, $user) = @_;
+    
+    return $user->for_session($c);
+}
+
 sub find_user {
     my ( $self, $userinfo, $c ) = @_;
 
-    my $model_class = $self->{config}->{model_class};
+    my $config = $self->{config};
+    my $model_class = $config->{model_class};
     my $model = $c->model($model_class);
     
     my $user = $model->auth($c, $userinfo);
     return unless $user;
 
-    return bless $user, $self->{config}->{user_type};
+    if ( $config->{user_type} eq 'Catalyst::Authentication::User::Hash' ) {
+        return bless $user, $config->{user_type};
+    } else {
+        return $config->{user_type}->new( { user => $user, storage => $self }, $c );
+    }
 }
 
 sub user_supports {
     my $self = shift;
     # this can work as a class method on the user class
-    $self->{config}->{'model_class'}->supports( @_ );
+    $self->{config}->{user_type}->supports( @_ );
 }
 
 1;
