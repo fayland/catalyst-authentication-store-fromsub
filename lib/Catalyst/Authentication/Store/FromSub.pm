@@ -21,8 +21,8 @@ use strict;
                 password_type => 'clear'
             },
             store => {
-                class => 'FromSub', # or 'Object'
-                user_type => 'Hash',
+                class => 'FromSub',
+                user_type => 'Hash', # or 'Object'
                 model_class => 'UserAuth',
                 id_field => 'user_id',
             }
@@ -40,8 +40,8 @@ use strict;
     }
     
     package MyApp::Model::UserAuth; # map with model_class in config above
-    use base qw/Catalyst::Model/;
     use strict;
+    use base qw/Catalyst::Model/;
     
     sub auth { # sub name needs to be 'auth'
         my ($self, $c, $userinfo) = @_;
@@ -121,6 +121,8 @@ contains the class name of the store to be used. it must be 'FromSub' here.
 
 'Hash' or 'Object', depends on the return value in sub auth, B<REQUIRED>.
 
+if the return value is hash, use 'Hash'. if it's DBIx::Class or something like that, please use 'Object'.
+
 =item model_class
 
 Contains the class name (as passed to $c->model()) of Catalyst.  This config item is B<REQUIRED>.
@@ -179,8 +181,8 @@ through the $c->authenticate() call.
     }
     
     package MyApp::Model::UserAuth; # map with model_class in config above
-    use base qw/Catalyst::Model/;
     use strict;
+    use base qw/Catalyst::Model/;
     
     sub auth {
         my ($self, $c, $userinfo) = @_;
